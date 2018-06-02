@@ -69,7 +69,7 @@ function populate_repo_list {
 
 function delete_git_config {
   echo "You are about to delete your saved github organization name and github user name you will have to re-enter this the next time you run this script are you sure you want to proceed?"
-  read delete_config
+  read -r delete_config
   if [[ "y" == "$delete_config" || "Y" == "$delete_config" || "yes" == "$delete_config" || "YES" == "$delete_config" || "Yes" == "$delete_config" ]]; then
     if [ -f "$file_name_for_config" ]; then
       rm "$file_name_for_config"
@@ -91,7 +91,13 @@ function load_git_config {
     echo "loading from git config file"
     gitdir_config=$(cat $file_name_for_config)
     echo "$gitdir_config"
-    declare -a gitdir_configs=(${gitdir_config//|/ })
+
+    #declare -a gitdir_configs=(${gitdir_config//|/ })
+
+    OLDIFS=$IFS
+    IFS='|' read -r -a gitdir_configs <<< "$gitdir_config"
+    IFS=$OLDIFS
+
     github_org_name="${gitdir_configs[0]}"
     github_user="${gitdir_configs[1]}"
   fi
@@ -105,17 +111,17 @@ function load_git_config {
 function create_git_config {
   echo " "
   echo "Please enter the github organization name and hit enter:"
-  read github_org_name
+  read -r github_org_name
   echo " "
   echo "Please enter your github user name and hit enter:"
-  read github_user
+  read -r github_user
   echo "You have entered the following values:"
   echo "  github organization: $github_org_name"
   echo "  github user: $github_user"
   echo " "
   echo "Are these correct?"
-  read correct_entries
-  if [[ "y"=="$correct_entries" || "Y"=="$correct_entries" || "yes"=="$correct_entries" || "YES"=="$correct_entries" || "Yes"=="$correct_entries" ]]; then
+  read -r correct_entries
+  if [[ "y" == "$correct_entries" || "Y" == "$correct_entries" || "yes" == "$correct_entries" || "YES" == "$correct_entries" || "Yes" == "$correct_entries" ]]; then
     touch "$file_name_for_config"
     echo "$github_org_name|$github_user">"$file_name_for_config"
   else
@@ -129,7 +135,7 @@ function pull_repos {
 
 function fetch_repos {
   pull_current_branch="$1"
-  while read repo; do
+  while read -r repo; do
     message="Repo: $repo"
     repo_cloned="false"
     for directory in *
@@ -162,7 +168,7 @@ function fetch_repos {
 
 function check_for_uncommitted {
   no_local_changes_found="true"
-  while read repo; do
+  while read -r repo; do
     for directory in *
     do
       if [[ -d $directory ]]; then
@@ -185,6 +191,12 @@ function check_for_uncommitted {
     done
 
   done <"$file_name_for_repos"
+  if [ "true" == "$no_local_changes_found" ]; then
+    echo " "
+    echo "No changes found!"
+    echo " "
+  fi
+
 }
 
 function show_repo_list {
@@ -193,12 +205,12 @@ function show_repo_list {
 
 
 #Start processing by checking for command switches if there are none print usage and exit.
-if [[ "" == "$@" ]]; then
+if [[ "" == "$*" ]]; then
   usage
   exit 1
 fi
 
-for arg in $@
+for arg in "$@"
 do
   if [[ "$arg" == "$cmd_switch_check_uncommitted" ]]; then
     echo "---- Checking repos for uncommitted files ----"
