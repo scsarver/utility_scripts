@@ -4,6 +4,7 @@
 # Created Date: 20180531-092037
 #
 set -o errexit
+set -o errtrace
 set -o nounset
 
 clear
@@ -151,7 +152,7 @@ function fetch_repos {
           echo "$message"
           git fetch --all
           if [[ "y" == "$pull_current_branch" ]]; then
-            git pull
+            trap "git pull" EXIT
           fi
           repo_cloned="true"
           popd > /dev/null 2>&1

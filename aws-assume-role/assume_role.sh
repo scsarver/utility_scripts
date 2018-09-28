@@ -177,7 +177,7 @@ do
   touch $aws_assumed_role_output
   echo "$assume_out" |  jq -r '.Credentials.AccessKeyId, .Credentials.SecretAccessKey, .Credentials.SessionToken'>$aws_assumed_role_output
 
-  echo "$aws_assumed_role_output"
+  #echo "$aws_assumed_role_output"
 
   # Unset the currently profile currently set in AWS_PROFILE env var and run the aws config into the AWS_SHARED_CREDENTIALS_FILE env var.
   unset AWS_PROFILE
