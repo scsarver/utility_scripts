@@ -5,7 +5,6 @@
 #
 # Dependencies: jq, awscli
 #
-# ./assume_role.sh --adid=ssarver --region=us-east-1 --role=OrganizationAccountAccessRole --accounts=473830466053
 # ./assume_role.sh --adid=YOUR_USERNAME --region=YOUR_REGION --role=YOUR_ROLE --accounts=YOUR_ACCOUNTS_COMMA_SEPERATED_LIST
 # set -o errexit
 # set -o nounset
