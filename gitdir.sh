@@ -16,6 +16,10 @@ cmd_switch_git_fetch="-f"
 cmd_switch_show_repo_list="-l"
 cmd_switch_git_pull="-p"
 cmd_switch_update_repo_list="-u"
+cmd_switch_set_config_for_current_repos="-m"
+
+# TODO: Figure out how to do this
+# cmd_switch_display_review_requests="-r"
 
 github_user=""
 github_org_name=""
@@ -47,6 +51,10 @@ function usage(){
   echo "      -l Used to show the list of cloned repositories."
   echo "      -p Used to pull the latested currently checked out versions of the repositories."
   echo "      -u Used for updating the locally cached repository list."
+  echo "      -m Match or set the gitdir config for the currently cloned repos(do not pull all from org)."
+
+  # TODO: Figure out how to do this
+  # echo "      -r Used for listing review requests."
   echo " "
 }
 
@@ -66,6 +74,23 @@ function throw_error(){
 function populate_repo_list {
   touch "$file_name_for_repos"
   curl --user "$github_user" "$github_api_base/orgs/$github_org_name/repos?per_page=100" | jq -r ".[].name" >"$file_name_for_repos"
+}
+
+# Iterate local directorry and only add to config directories that have a .git directory!
+function populate_cloned_repo_list {
+  touch "$file_name_for_repos"
+  for dir in $(ls)
+  do
+    if [ -d "$dir" ]; then
+      for nesteddir in $(ls -a $dir)
+      do
+        if [ ".git" == "$nesteddir" ]; then
+          echo "Setting - $dir"
+          echo "$dir" >>"$file_name_for_repos"
+        fi
+      done
+    fi
+  done
 }
 
 function delete_git_config {
@@ -205,6 +230,42 @@ function show_repo_list {
 }
 
 
+# TODO: Figure out how to do this
+# function list_review_requests {
+#   echo "---- List open review requests ----"
+#   echo  " "
+#   # echo "Implement me!!!"
+#
+#   # URL="https://github.com/pulls/review-requested"
+#   # URL="https://github.com/pulls?q=is%3Aopen+is%3Apr+review-requested%3Ascsarver+archived%3Afalse+user%3Aopploans"
+#   # curl -L  --user "$github_user" "$URL"
+#
+#   #https://developer.github.com/v3/search/
+#   #https://github.com/pulls/review-requested
+#
+#   # curl --user "$github_user" "$github_api_base/orgs/$github_org_name/repos?per_page=100" | jq -r ".[].name" >"$file_name_for_repos"
+#   # curl -v -H "Authorization: token TOKEN" https://api.github.com/search/issues?q=is:open+is:pr+review-requested:"$github_user"
+#   # curl -v --user "$github_user" "$github_api_base/orgs/$github_org_name/search/issues?q=is:open+is:pr+review-requested:$github_user"
+#
+#   #is:open is:pr review-requested:scsarver archived:false
+#   # curl -L -v --user "$github_user" "https://github.com/pulls/review-requested"
+#
+#
+#   # SEARCH_PATH="/search/pulls"
+#   # SEARCH_STRING="q=is:open+is:pr+review-requested:$github_user+archived:false+org:$github_org_name"
+#   # echo " "
+#   # echo "Requesting: ${github_api_base}${SEARCH_PATH}?${SEARCH_STRING}"
+#
+#   # curl -v --user "$github_user" -H "application/vnd.github.symmetra-preview+json" "$github_api_base/orgs/$github_org_name/search/pulls?q=is:open+is:pr+review-requested:$github_user"
+#   # curl --user "$github_user" -H "application/vnd.github.symmetra-preview+json" "$github_api_base/search/pulls?q=is:open+is:pr+review-requested:$github_user"
+#   # curl --user "$github_user" "${github_api_base}/search/pulls?q=is:open+is:pr+review-requested:$github_user"
+#
+#   # curl --user "$github_user" "${github_api_base}${SEARCH_PATH}?${SEARCH_STRING}"
+#   # | jq -r '.items[] | .url'
+# }
+
+
+
 #Start processing by checking for command switches if there are none print usage and exit.
 if [[ "" == "$*" ]]; then
   usage
@@ -232,10 +293,18 @@ do
     load_git_config
     populate_repo_list
     pull_repos
+  elif [[ "$arg" == "$cmd_switch_set_config_for_current_repos" ]]; then
+    echo "---- Executing gitdir set the gitdir config for the currently cloned repos(do not pull all from org) ---- "
+    load_git_config
+    populate_cloned_repo_list
   elif [[ "$arg" == "$cmd_switch_update_repo_list" ]]; then
     echo "---- Executing gitdir update repo list! ---- "
     load_git_config
     populate_repo_list
+  # elif [[ "$arg" == "$cmd_switch_display_review_requests" ]]; then
+  #   echo "---- Executing gitdir list review requests! ---- "
+  #   load_git_config
+  #   list_review_requests
   else
     usage
     throw_error "Unexpected parameter found:" "$arg"
