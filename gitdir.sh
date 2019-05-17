@@ -78,6 +78,7 @@ function populate_repo_list {
 
 # Iterate local directorry and only add to config directories that have a .git directory!
 function populate_cloned_repo_list {
+  rm "$file_name_for_repos"
   touch "$file_name_for_repos"
   for dir in $(ls)
   do
@@ -291,7 +292,6 @@ do
   elif [[ "$arg" == "$cmd_switch_git_pull" ]]; then
     echo "---- Executing gitdir pull! ---- "
     load_git_config
-    populate_repo_list
     pull_repos
   elif [[ "$arg" == "$cmd_switch_set_config_for_current_repos" ]]; then
     echo "---- Executing gitdir set the gitdir config for the currently cloned repos(do not pull all from org) ---- "
