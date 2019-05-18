@@ -25,9 +25,11 @@ github_user=""
 github_org_name=""
 github_api_base="https://api.github.com"
 github_repo_base="https://github.com/"
+github_api_per_page="100"
 
 file_name_for_config=".gitdir_conf"
 file_name_for_repos=".gitdir_repos"
+file_name_for_skip_repos=".gitdir_skip_repos"
 
 #repos=()
 
@@ -72,8 +74,18 @@ function throw_error(){
 }
 
 function populate_repo_list {
+  local page_count=1
+  local repo_count=0
+  rm "$file_name_for_repos"
   touch "$file_name_for_repos"
-  curl --user "$github_user" "$github_api_base/orgs/$github_org_name/repos?per_page=100" | jq -r ".[].name" >"$file_name_for_repos"
+  # curl --user "$github_user" "$github_api_base/orgs/$github_org_name/repos?per_page=100&page=2" | jq -r ".[].name" >"$file_name_for_repos"
+
+  while [ "$(expr $repo_count % $github_api_per_page)" == "0" ]
+  do
+    curl --user "$github_user" "$github_api_base/orgs/$github_org_name/repos?page=$page_count&per_page=$github_api_per_page" | jq -r ".[].name" >>"$file_name_for_repos"
+    repo_count=$(wc -l < "$file_name_for_repos")
+    page_count=$((page_count+1))
+  done
 }
 
 # Iterate local directorry and only add to config directories that have a .git directory!
@@ -161,33 +173,54 @@ function pull_repos {
 }
 
 function fetch_repos {
+  count=0
   pull_current_branch="$1"
   while read -r repo; do
+    skip_repo_processing='false'
     message="Repo: $repo"
     repo_cloned="false"
     for directory in *
     do
       if [[ -d $directory ]]; then
         if [[ "$directory" == "$repo" ]]; then
-          message="$message - Found - fetching from git"
-          if [[ "y" == "$pull_current_branch" ]]; then
-            message="$message - pulling latest into current branch."
+          if [ -f "$file_name_for_skip_repos" ]; then
+            while read -r skip_repo; do
+              if [ "$repo" == "$skip_repo" ]; then
+                skip_repo_processing='true'
+              fi
+            done <"$file_name_for_skip_repos"
+          else
+            echo "------------exit 1----"
+            exit 1
           fi
-          pushd . > /dev/null 2>&1
-          cd "$repo" > /dev/null 2>&1
-          echo "$message"
-          git fetch --all
-          if [[ "y" == "$pull_current_branch" ]]; then
-            git pull
+          count=$((count+1))
+          if [ "true" ==  "$skip_repo_processing" ]; then
+            echo "***** - $message - $count Skipping processing!"
+          else
+            message="$message - $count - Found - fetching from git"
+            if [[ "y" == "$pull_current_branch" ]]; then
+              message="$message - pulling latest into current branch."
+            fi
+            pushd . > /dev/null 2>&1
+            cd "$repo" > /dev/null 2>&1
+            echo "$message"
+            git fetch --all
+            if [[ "y" == "$pull_current_branch" ]]; then
+              git pull
+            fi
+            repo_cloned="true"
+            popd > /dev/null 2>&1
           fi
           repo_cloned="true"
           popd > /dev/null 2>&1
         fi
       fi
     done
-    if [[ "false" == "$repo_cloned" ]]; then
-      echo "$message not found, cloning!"
-      git clone "$github_repo_base$github_org_name/$repo.git"
+    if [[ "false" ==  "$skip_repo_processing" ]]; then
+      if [[ "false" == "$repo_cloned" ]] ; then
+        echo "$message not found, cloning!"
+        git clone "$github_repo_base$github_org_name/$repo.git"
+      fi
     fi
     echo " "
   done <"$file_name_for_repos"
