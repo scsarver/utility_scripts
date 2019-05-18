@@ -189,9 +189,6 @@ function fetch_repos {
                 skip_repo_processing='true'
               fi
             done <"$file_name_for_skip_repos"
-          else
-            echo "------------exit 1----"
-            exit 1
           fi
           count=$((count+1))
           if [ "true" ==  "$skip_repo_processing" ]; then
@@ -218,7 +215,7 @@ function fetch_repos {
     done
     if [[ "false" ==  "$skip_repo_processing" ]]; then
       if [[ "false" == "$repo_cloned" ]] ; then
-        echo "$message not found, cloning!"
+        echo "$message not found, cloning! - $count"
         git clone "$github_repo_base$github_org_name/$repo.git"
       fi
     fi
@@ -317,7 +314,6 @@ do
   elif [[ "$arg" == "$cmd_switch_git_fetch" ]]; then
     echo "---- Executing gitdir fetch! ---- "
     load_git_config
-    populate_repo_list
     fetch_repos "n"
   elif [[ "$arg" == "$cmd_switch_show_repo_list" ]]; then
     echo "---- Show gitdir repo list! ---- "
