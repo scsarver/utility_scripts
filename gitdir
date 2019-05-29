@@ -14,6 +14,7 @@ cmd_switch_check_uncommitted="-c"
 cmd_switch_delete_config="-d"
 cmd_switch_git_fetch="-f"
 cmd_switch_show_repo_list="-l"
+cmd_switch_show_repo_branch="-b"
 cmd_switch_git_pull="-p"
 cmd_switch_update_repo_list="-u"
 cmd_switch_set_config_for_current_repos="-m"
@@ -51,6 +52,7 @@ function usage(){
   echo "      -d Used to delete locally stored configuration and start new."
   echo "      -f Used to fetch and update the local git indexes for the repositories."
   echo "      -l Used to show the list of cloned repositories."
+  echo "      -b Used to show the checkout branch of each cloned repository."
   echo "      -p Used to pull the latested currently checked out versions of the repositories."
   echo "      -u Used for updating the locally cached repository list."
   echo "      -m Match or set the gitdir config for the currently cloned repos(do not pull all from org)."
@@ -260,6 +262,29 @@ function show_repo_list {
     cat "$file_name_for_repos"
 }
 
+function show_repos_branch {
+
+  while read -r repo; do
+    for directory in *
+    do
+      if [[ -d $directory ]]; then
+        if [[ "$directory" == "$repo" ]]; then
+          pushd . > /dev/null 2>&1
+          cd "$repo" > /dev/null 2>&1
+
+          # echo "=============="
+          branch_name=$(git branch | grep '*')
+          leadspace='     '
+          padspace='                    '
+          printf '%s%15.25s%s%s\n' "$leadspace" "$repo$padspace" "$leadspace" "${branch_name#*[*]}"
+          popd > /dev/null 2>&1
+        fi
+      fi
+    done
+  done <"$file_name_for_repos"
+
+}
+
 
 # TODO: Figure out how to do this
 # function list_review_requests {
@@ -318,6 +343,9 @@ do
   elif [[ "$arg" == "$cmd_switch_show_repo_list" ]]; then
     echo "---- Show gitdir repo list! ---- "
     show_repo_list
+  elif [[ "$arg" == "$cmd_switch_show_repo_branch" ]]; then
+    echo "---- Show gitdir repos branch! ---- "
+    show_repos_branch
   elif [[ "$arg" == "$cmd_switch_git_pull" ]]; then
     echo "---- Executing gitdir pull! ---- "
     load_git_config
