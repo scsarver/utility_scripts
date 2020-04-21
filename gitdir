@@ -62,6 +62,17 @@ function usage(){
   # TODO: Figure out how to do this
   # echo "      -r Used for listing review requests."
   echo " "
+  echo " "
+  echo "  Config files:"
+  echo "      [$file_name_for_config] - This file contains the organization, username and team name which"
+  echo "           is parsed when interacting with the github api. This file is a '|' seperated list of "
+  echo "           github organization name|github username|github team name"
+  echo "           github organization and team can be blank."
+  echo "      [$file_name_for_repos] - This file contains repos that gitdir manages"
+  echo "      [$file_name_for_skip_repos] - This file contains directories(repos) that gitdir will ignore"
+  echo "      [$file_name_for_git_token] - This file contains your personal access token. This file is not"
+  echo "           required if you want to be prompted to enter it each time gitdir makes an api call."
+  echo " "
 }
 
 function throw_error(){
@@ -80,7 +91,10 @@ function throw_error(){
 function populate_repo_list {
   local page_count=1
   local repo_count=0
-  rm "$file_name_for_repos"
+
+  if [ -f "$file_name_for_repos" ]; then
+    rm "$file_name_for_repos"
+  fi
   touch "$file_name_for_repos"
 
   while [ "$(expr $repo_count % $github_api_per_page)" == "0" ]
@@ -91,7 +105,11 @@ function populate_repo_list {
     fi
     git_user_string="$github_user$git_user_token"
     if [ "" == "$github_team_name" ]; then
-      output=$(curl -L -u "$git_user_string" "$github_api_base/orgs/$github_org_name/repos?page=$page_count&per_page=$github_api_per_page")
+      if [ "" == "$github_org_name" ]; then
+        output=$(curl -L -u "$github_user" "$github_api_base/user/repos?page=$page_count&per_page=$github_api_per_page")
+      else
+        output=$(curl -L -u "$github_user" "$github_api_base/orgs/$github_org_name/repos?page=$page_count&per_page=$github_api_per_page")
+      fi
     else
       echo "Selecting repos by team using: $github_org_name and $github_team_name"
       output=$(curl -L -u "$git_user_string" "$github_api_base/users/$github_user/orgs")
@@ -159,10 +177,12 @@ function load_git_config {
 
     github_org_name="${gitdir_configs[0]}"
     github_user="${gitdir_configs[1]}"
-    github_team_name="${gitdir_configs[2]}"
+    if [ "${#gitdir_configs[@]}" -eq "3" ]; then
+      github_team_name="${gitdir_configs[2]}"
+    fi
   fi
 
-  if [[ "" == "$github_user"  || "" == "$github_org_name" ]]; then
+  if [[ "" == "$github_user" ]]; then
     echo "Storing to git config file"
     create_git_config
   fi
@@ -170,23 +190,19 @@ function load_git_config {
 
 function create_git_config {
   echo " "
-  echo "Please enter the github organization name and hit enter:"
+  echo "Please enter the github organization name and hit enter (This can be empty):"
   read -r github_org_name
   echo " "
   echo "Please enter your github user name and hit enter:"
   read -r github_user
-
-
   echo " "
-  echo "Please enter your github team name to restrict gitdir to only your teams repos or leave blank hit enter:"
+  echo "Please enter your github team name to restrict gitdir to only your teams repos hit enter (This can be empty):"
   read -r github_team_name
-
-
   echo "You have entered the following values:"
-  echo "  github organization: $github_org_name"
+  echo "  github organization (This can be empty): $github_org_name"
   echo "  github user: $github_user"
   if [ "" == "$github_team_name" ]; then
-    echo "  No github team entered!"
+    echo "  No github team entered (This can be empty)!"
   else
     echo "  github team: $github_team_name"
   fi
@@ -208,60 +224,64 @@ function pull_repos {
 function fetch_repos {
   count=0
   pull_current_branch="$1"
-  while read -r repo; do
-    skip_repo_processing='false'
-    message="Repo: $repo"
-    repo_cloned="false"
-    for directory in *
-    do
-      if [[ -d $directory ]]; then
-        if [[ "$directory" == "$repo" ]]; then
-          if [ -f "$file_name_for_skip_repos" ]; then
-            while read -r skip_repo; do
-              if [ "$repo" == "$skip_repo" ]; then
-                skip_repo_processing='true'
-              fi
-            done <"$file_name_for_skip_repos"
-          fi
-          count=$((count+1))
-          if [ "true" ==  "$skip_repo_processing" ]; then
-            echo "***** - $message - $count Skipping processing!"
-          else
-            message="$message - $count - Found - fetching from git"
-            if [[ "y" == "$pull_current_branch" ]]; then
-              message="$message - pulling latest into current branch."
+  if [ -f "$file_name_for_repos" ]; then
+    while read -r repo; do
+      skip_repo_processing='false'
+      message="Repo: $repo"
+      repo_cloned="false"
+      for directory in *
+      do
+        if [[ -d $directory ]]; then
+          if [[ "$directory" == "$repo" ]]; then
+            if [ -f "$file_name_for_skip_repos" ]; then
+              while read -r skip_repo; do
+                if [ "$repo" == "$skip_repo" ]; then
+                  skip_repo_processing='true'
+                fi
+              done <"$file_name_for_skip_repos"
             fi
-            pushd . > /dev/null 2>&1
-            cd "$repo" > /dev/null 2>&1
-            echo "$message"
-            git fetch --all
-            if [[ "y" == "$pull_current_branch" ]]; then
-              git pull
+            count=$((count+1))
+            if [ "true" ==  "$skip_repo_processing" ]; then
+              echo "***** - $message - $count Skipping processing!"
+            else
+              message="$message - $count - Found - fetching from git"
+              if [[ "y" == "$pull_current_branch" ]]; then
+                message="$message - pulling latest into current branch."
+              fi
+              pushd . > /dev/null 2>&1
+              cd "$repo" > /dev/null 2>&1
+              echo "$message"
+              git fetch --all
+              if [[ "y" == "$pull_current_branch" ]]; then
+                git pull
+              fi
+              repo_cloned="true"
+              popd > /dev/null 2>&1
             fi
             repo_cloned="true"
             popd > /dev/null 2>&1
           fi
-          repo_cloned="true"
-          popd > /dev/null 2>&1
+        fi
+      done
+      if [[ "false" ==  "$skip_repo_processing" ]]; then
+        if [[ "false" == "$repo_cloned" ]] ; then
+          echo "$message not found, cloning! - $count"
+          git_user_token=
+          if [ -f "$file_name_for_git_token" ]; then
+            git_user_token=":$(cat $file_name_for_git_token)"
+            git_user_string="$github_user$git_user_token"
+            git_clone_string="https://$git_user_string@${github_repo_base#https://}$github_org_name/$repo.git"
+            git clone "$git_clone_string"
+          else
+            git clone "$github_repo_base$github_org_name/$repo.git"
+          fi
         fi
       fi
-    done
-    if [[ "false" ==  "$skip_repo_processing" ]]; then
-      if [[ "false" == "$repo_cloned" ]] ; then
-        echo "$message not found, cloning! - $count"
-        git_user_token=
-        if [ -f "$file_name_for_git_token" ]; then
-          git_user_token=":$(cat $file_name_for_git_token)"
-          git_user_string="$github_user$git_user_token"
-          git_clone_string="https://$git_user_string@${github_repo_base#https://}$github_org_name/$repo.git"
-          git clone "$git_clone_string"
-        else
-          git clone "$github_repo_base$github_org_name/$repo.git"
-        fi
-      fi
-    fi
-    echo " "
-  done <"$file_name_for_repos"
+      echo " "
+    done <"$file_name_for_repos"
+  else
+    echo "No repos file list found to fetch! Use gitdir with the -u flag to update local cache file."
+  fi
 }
 
 function check_for_uncommitted {
