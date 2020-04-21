@@ -24,6 +24,7 @@ cmd_switch_set_config_for_current_repos="-m"
 
 github_user=""
 github_org_name=""
+github_team_name=""
 github_api_base="https://api.github.com"
 github_repo_base="https://github.com/"
 github_api_per_page="100"
@@ -31,6 +32,7 @@ github_api_per_page="100"
 file_name_for_config=".gitdir_conf"
 file_name_for_repos=".gitdir_repos"
 file_name_for_skip_repos=".gitdir_skip_repos"
+file_name_for_git_token=".gitdir_pat"
 
 #repos=()
 
@@ -80,11 +82,27 @@ function populate_repo_list {
   local repo_count=0
   rm "$file_name_for_repos"
   touch "$file_name_for_repos"
-  # curl --user "$github_user" "$github_api_base/orgs/$github_org_name/repos?per_page=100&page=2" | jq -r ".[].name" >"$file_name_for_repos"
 
   while [ "$(expr $repo_count % $github_api_per_page)" == "0" ]
   do
-    curl --user "$github_user" "$github_api_base/orgs/$github_org_name/repos?page=$page_count&per_page=$github_api_per_page" | jq -r ".[].name" >>"$file_name_for_repos"
+    git_user_token=
+    if [ -f "$file_name_for_git_token" ]; then
+      git_user_token=":$(cat $file_name_for_git_token)"
+    fi
+    git_user_string="$github_user$git_user_token"
+    if [ "" == "$github_team_name" ]; then
+      output=$(curl -L -u "$git_user_string" "$github_api_base/orgs/$github_org_name/repos?page=$page_count&per_page=$github_api_per_page")
+    else
+      echo "Selecting repos by team using: $github_org_name and $github_team_name"
+      output=$(curl -L -u "$git_user_string" "$github_api_base/users/$github_user/orgs")
+      github_org_id=$(echo "$output" | jq -r --arg ORG_NAME "$github_org_name" '.[] | select(.login==$ORG_NAME) | .id')
+      output=$(curl -L -u "$git_user_string" "$github_api_base/orgs/$github_org_name/teams?page=$page_count&per_page=$github_api_per_page")
+
+      github_team_id=$(echo "$output" | jq -r --arg TEAM_NAME "$github_team_name" '.[] | select(.name==$TEAM_NAME) | .id')
+      github_team_repositories_url=$(echo "$output" | jq -r --arg TEAM_NAME "$github_team_name" '.[] | select(.name==$TEAM_NAME) | .repositories_url')
+      output=$(curl -u "$git_user_string" "$github_team_repositories_url?page=$page_count&per_page=$github_api_per_page")
+    fi
+    echo "$output" | jq -r ".[].name" >>"$file_name_for_repos"
     repo_count=$(wc -l < "$file_name_for_repos")
     page_count=$((page_count+1))
   done
@@ -141,6 +159,7 @@ function load_git_config {
 
     github_org_name="${gitdir_configs[0]}"
     github_user="${gitdir_configs[1]}"
+    github_team_name="${gitdir_configs[2]}"
   fi
 
   if [[ "" == "$github_user"  || "" == "$github_org_name" ]]; then
@@ -156,15 +175,27 @@ function create_git_config {
   echo " "
   echo "Please enter your github user name and hit enter:"
   read -r github_user
+
+
+  echo " "
+  echo "Please enter your github team name to restrict gitdir to only your teams repos or leave blank hit enter:"
+  read -r github_team_name
+
+
   echo "You have entered the following values:"
   echo "  github organization: $github_org_name"
   echo "  github user: $github_user"
+  if [ "" == "$github_team_name" ]; then
+    echo "  No github team entered!"
+  else
+    echo "  github team: $github_team_name"
+  fi
   echo " "
   echo "Are these correct?"
   read -r correct_entries
   if [[ "y" == "$correct_entries" || "Y" == "$correct_entries" || "yes" == "$correct_entries" || "YES" == "$correct_entries" || "Yes" == "$correct_entries" ]]; then
     touch "$file_name_for_config"
-    echo "$github_org_name|$github_user">"$file_name_for_config"
+    echo "$github_org_name|$github_user|$github_team_name">"$file_name_for_config"
   else
     throw_error "Aborting saving github organization and username."
   fi
@@ -218,7 +249,15 @@ function fetch_repos {
     if [[ "false" ==  "$skip_repo_processing" ]]; then
       if [[ "false" == "$repo_cloned" ]] ; then
         echo "$message not found, cloning! - $count"
-        git clone "$github_repo_base$github_org_name/$repo.git"
+        git_user_token=
+        if [ -f "$file_name_for_git_token" ]; then
+          git_user_token=":$(cat $file_name_for_git_token)"
+          git_user_string="$github_user$git_user_token"
+          git_clone_string="https://$git_user_string@${github_repo_base#https://}$github_org_name/$repo.git"
+          git clone "$git_clone_string"
+        else
+          git clone "$github_repo_base$github_org_name/$repo.git"
+        fi
       fi
     fi
     echo " "
