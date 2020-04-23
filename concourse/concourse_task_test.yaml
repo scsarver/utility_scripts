@@ -1,0 +1,14 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source: {repository: busybox}
+
+# Tried adding task inputs, it seems this is really only for uploading a directory instead of passing a string into the container.
+#inputs:
+#- name: date-message
+
+run:
+  path: date
+  args: [+%Y%m%d%H%M%S]
