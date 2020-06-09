@@ -1,0 +1,75 @@
+{
+    "ConfigRules": [
+        {
+            "ConfigRuleName": "AWS-Config-U-BucketPublicReadProhibit",
+            "ConfigRuleArn": "arn:aws:config:us-east-1:123456789012:config-rule/config-rule-123456",
+            "ConfigRuleId": "config-rule-123456",
+            "Scope": {
+                "ComplianceResourceTypes": [
+                    "AWS::S3::Bucket"
+                ]
+            },
+            "Source": {
+                "Owner": "AWS",
+                "SourceIdentifier": "S3_BUCKET_PUBLIC_READ_PROHIBITED"
+            },
+            "ConfigRuleState": "ACTIVE"
+        },
+        {
+            "ConfigRuleName": "AWS-Config-U-EBSEncryptionAtRestCheck",
+            "ConfigRuleArn": "arn:aws:config:us-east-1:123456789012:config-rule/config-rule-123457",
+            "ConfigRuleId": "config-rule-123457",
+            "Source": {
+                "Owner": "AWS",
+                "SourceIdentifier": "ENCRYPTED_VOLUMES"
+            },
+            "ConfigRuleState": "ACTIVE"
+        },
+        {
+            "ConfigRuleName": "AWS-Config-U-RDSEncryptionAtRestCheck",
+            "ConfigRuleArn": "arn:aws:config:us-east-1:123456789012:config-rule/config-rule-123458",
+            "ConfigRuleId": "config-rule-123458",
+            "Source": {
+                "Owner": "AWS",
+                "SourceIdentifier": "RDS_STORAGE_ENCRYPTED"
+            },
+            "ConfigRuleState": "ACTIVE"
+        },
+        {
+            "ConfigRuleName": "AWS-Config-U-S3EncryptionAtRestCheckR",
+            "ConfigRuleArn": "arn:aws:config:us-east-1:123456789012:config-rule/config-rule-123459",
+            "ConfigRuleId": "config-rule-123459",
+            "Source": {
+                "Owner": "AWS",
+                "SourceIdentifier": "S3_BUCKET_SERVER_SIDE_ENCRYPTION_ENABLED"
+            },
+            "ConfigRuleState": "ACTIVE"
+        },
+        {
+            "ConfigRuleName": "AWS-Config-US-RootMFAEnabledCheckRule",
+            "ConfigRuleArn": "arn:aws:config:us-east-1:123456789012:config-rule/config-rule-123450",
+            "ConfigRuleId": "config-rule-123450",
+            "Source": {
+                "Owner": "AWS",
+                "SourceIdentifier": "ROOT_ACCOUNT_MFA_ENABLED"
+            },
+            "MaximumExecutionFrequency": "TwentyFour_Hours",
+            "ConfigRuleState": "ACTIVE"
+        },
+        {
+            "ConfigRuleName": "vpc-sg-authorized-ports",
+            "ConfigRuleArn": "arn:aws:config:us-east-1:123456789012:config-rule/config-rule-123451",
+            "ConfigRuleId": "config-rule-123451",
+            "Scope": {
+                "ComplianceResourceTypes": [
+                    "AWS::EC2::SecurityGroup"
+                ]
+            },
+            "Source": {
+                "Owner": "AWS",
+                "SourceIdentifier": "VPC_SG_OPEN_ONLY_TO_AUTHORIZED_PORTS"
+            },
+            "ConfigRuleState": "ACTIVE"
+        }
+    ]
+}
