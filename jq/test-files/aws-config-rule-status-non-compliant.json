@@ -1,0 +1,15 @@
+{
+  "ConfigRulesEvaluationStatus": [
+    {
+      "ConfigRuleName": "AWS-Config-US-RootMFAEnabledCheckRule",
+      "ConfigRuleArn": "arn:aws:config:us-east-1:123456789012:config-rule/config-rule-123450",
+      "ConfigRuleId": "config-rule-123450",
+      "LastSuccessfulInvocationTime": "2020-05-09T13:26:33.853000-05:00",
+      "LastFailedEvaluationTime": "2020-05-09T13:26:34.174000-05:00",
+      "FirstActivatedTime": "2020-03-30T13:12:56.532000-05:00",
+      "LastErrorCode": "AccessDeniedException",
+      "LastErrorMessage": "Unable to perform config:PutEvaluations due to the lack of permissions on the role.",
+      "FirstEvaluationStarted": true
+    }
+  ]
+}

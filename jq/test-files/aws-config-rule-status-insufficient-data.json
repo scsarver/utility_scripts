@@ -1,0 +1,11 @@
+{
+  "ConfigRulesEvaluationStatus": [
+    {
+      "ConfigRuleName": "AWS-Config-U-RDSEncryptionAtRestCheck",
+      "ConfigRuleArn": "arn:aws:config:us-east-1:123456789012:config-rule/config-rule-123458",
+      "ConfigRuleId": "config-rule-123458",
+      "FirstActivatedTime": "2020-03-30T13:12:56.738000-05:00",
+      "FirstEvaluationStarted": true
+    }
+  ]
+}

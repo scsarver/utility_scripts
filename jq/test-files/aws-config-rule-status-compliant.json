@@ -1,0 +1,13 @@
+{
+  "ConfigRulesEvaluationStatus": [
+    {
+      "ConfigRuleName": "AWS-Config-U-S3EncryptionAtRestCheckR",
+      "ConfigRuleArn": "arn:aws:config:us-east-1:123456789012:config-rule/config-rule-123459",
+      "ConfigRuleId": "config-rule-123459",
+      "LastSuccessfulInvocationTime": "2020-05-04T11:38:46.195000-05:00",
+      "LastSuccessfulEvaluationTime": "2020-05-04T11:38:46.342000-05:00",
+      "FirstActivatedTime": "2020-03-30T13:12:56.684000-05:00",
+      "FirstEvaluationStarted": true
+    }
+  ]
+}

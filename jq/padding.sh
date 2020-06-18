@@ -18,10 +18,10 @@ SCRIPTNAME=$(basename $0)
 
 echo "Left pad function example:"
 # First test function not a friendly to using nested properties
-# cat "aws-config-rules.json" | jq -r 'def pad(n): if n==0 then (.) else " " + (.) | pad(n - 1) end; .ConfigRules[] | .ConfigRuleName | pad(20)'
+# cat "test-files/aws-config-rules.json" | jq -r 'def pad(n): if n==0 then (.) else " " + (.) | pad(n - 1) end; .ConfigRules[] | .ConfigRuleName | pad(20)'
 # Second test function better for nested properties
-cat "aws-config-rules.json" | jq -r 'def lpad(string;len;fill): if len == 0 then string else (fill * len)[0:len] + string end; .ConfigRules[] | "[" + lpad(.ConfigRuleName;10;" ") + "]"'
+cat "test-files/aws-config-rules.json" | jq -r 'def lpad(string;len;fill): if len == 0 then string else (fill * len)[0:len] + string end; .ConfigRules[] | "[" + lpad(.ConfigRuleName;10;" ") + "]"'
 echo " "
 echo "Right pad function example:"
-# cat "aws-config-rules.json" | jq -r 'def pad(n): if n==0 then (.) else (.) + " " | pad(n - 1) end; .ConfigRules[] | .ConfigRuleName | pad(5) | "[" + . + "]"'
-cat "aws-config-rules.json" | jq -r 'def rpad(string;len;fill): if len - (string | length) <= 0 then string else string + (fill * (len - (string | length)))[0:len] end;.ConfigRules[] | "[" + rpad(.ConfigRuleName;40;" ") + "]"'
+# cat "test-files/aws-config-rules.json" | jq -r 'def pad(n): if n==0 then (.) else (.) + " " | pad(n - 1) end; .ConfigRules[] | .ConfigRuleName | pad(5) | "[" + . + "]"'
+cat "test-files/aws-config-rules.json" | jq -r 'def rpad(string;len;fill): if len - (string | length) <= 0 then string else string + (fill * (len - (string | length)))[0:len] end;.ConfigRules[] | "[" + rpad(.ConfigRuleName;40;" ") + "]"'
