@@ -1,0 +1,36 @@
+{
+  "Volumes": [
+    {
+      "Attachments": [],
+      "AvailabilityZone": "us-east-1a",
+      "CreateTime": "2020-02-18T20:38:28.942000+00:00",
+      "Encrypted": false,
+      "Size": 10,
+      "SnapshotId": "snap-0f123456789012345",
+      "State": "available",
+      "VolumeId": "vol-12345678901234567",
+      "Iops": 100,
+      "Tags": [
+        {
+          "Key": "Admin",
+          "Value": "Brent Geller"
+        }
+      ],
+      "VolumeType": "gp2",
+      "MultiAttachEnabled": false
+    },
+    {
+      "Attachments": [],
+      "AvailabilityZone": "us-east-1a",
+      "CreateTime": "2020-02-18T20:38:28.942000+00:00",
+      "Encrypted": false,
+      "Size": 10,
+      "SnapshotId": "snap-0f123456789012346",
+      "State": "available",
+      "VolumeId": "vol-12345678901234568",
+      "Iops": 100,
+      "VolumeType": "gp2",
+      "MultiAttachEnabled": false
+    }
+  ]
+}
