@@ -7,6 +7,10 @@
 # set -o errtrace
 set -o nounset
 
+
+# TODO: Make gitdir aware of the calling directory so the installation or location of the script does not matter!
+
+
 clear
 
 #Initialize the command switches
